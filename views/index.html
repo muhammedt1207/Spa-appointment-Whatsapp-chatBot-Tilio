@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spa Appointment Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">Spa Appointment Booking</h1>
+        <form id="bookingForm" class="space-y-4">
+            <input type="text" name="name" placeholder="Full Name" required 
+                   class="w-full p-2 border rounded">
+            <input type="tel" name="phone" placeholder="Phone Number" required 
+                   class="w-full p-2 border rounded">
+            <select name="service" required class="w-full p-2 border rounded">
+                <option value="">Select Service</option>
+                <option value="Massage">Massage</option>
+                <option value="Facial">Facial</option>
+                <option value="Manicure">Manicure</option>
+                <option value="Pedicure">Pedicure</option>
+            </select>
+            <input type="date" name="date" required 
+                   class="w-full p-2 border rounded">
+            <input type="time" name="time" required 
+                   class="w-full p-2 border rounded">
+            <textarea name="notes" placeholder="Additional Notes" 
+                      class="w-full p-2 border rounded"></textarea>
+            <div class="flex space-x-4">
+                <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                    Book Appointment
+                </button>
+                <button type="button" id="modifyBtn" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">
+                    Modify Appointment
+                </button>
+                <button type="button" id="cancelBtn" class="w-full bg-red-500 text-white p-2 rounded hover:bg-red-600">
+                    Cancel Appointment
+                </button>
+            </div>
+        </form>
+        <div id="messageArea" class="mt-4 text-center"></div>
+    </div>
+
+    <script>
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/appointments/book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const messageArea = document.getElementById('messageArea');
+
+                if (result.success) {
+                    messageArea.innerHTML = `<p class="text-green-600">${result.message}</p>`;
+                    e.target.reset();
+                } else {
+                    messageArea.innerHTML = `<p class="text-red-600">${result.message}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        document.getElementById('modifyBtn').addEventListener('click', async () => {
+            const phone = document.querySelector('input[name="phone"]').value;
+            const modifiedData = {
+                phone,
+                service: document.querySelector('select[name="service"]').value,
+                date: document.querySelector('input[name="date"]').value,
+                time: document.querySelector('input[name="time"]').value,
+                notes: document.querySelector('textarea[name="notes"]').value
+            };
+
+            try {
+                const response = await fetch('/api/appointments/modify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(modifiedData)
+                });
+
+                const result = await response.json();
+                const messageArea = document.getElementById('messageArea');
+
+                if (result.success) {
+                    messageArea.innerHTML = `<p class="text-green-600">${result.message}</p>`;
+                } else {
+                    messageArea.innerHTML = `<p class="text-red-600">${result.message}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', async () => {
+            const phone = document.querySelector('input[name="phone"]').value;
+
+            try {
+                const response = await fetch('/api/appointments/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone })
+                });
+
+                const result = await response.json();
+                const messageArea = document.getElementById('messageArea');
+
+                if (result.success) {
+                    messageArea.innerHTML = `<p class="text-green-600">${result.message}</p>`;
+                    document.getElementById('bookingForm').reset();
+                } else {
+                    messageArea.innerHTML = `<p class="text-red-600">${result.message}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
